@@ -1,105 +1,70 @@
-<div align="center">
+# Ecom-Video-Multi-Agent
 
-# 🤖 E-Commerce Video Multi-Agent System
+![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 
-[![Claude Code](https://img.shields.io/badge/Claude-Code-D4A843?style=flat-square&logo=anthropic&logoColor=white)](https://claude.com/code)
-[![Multi-Agent](https://img.shields.io/badge/Multi--Agent-7B68EE?style=flat-square)](https://github.com)
-[![Lark](https://img.shields.io/badge/Lark-Bitable-00D6B9?style=flat-square&logo=bytedance&logoColor=white)](https://open.feishu.cn)
-[![Seedance](https://img.shields.io/badge/Seedance-2.0-FF6B35?style=flat-square)](https://www.volcengine.com)
-[![TikTok](https://img.shields.io/badge/TikTok-Shop-000000?style=flat-square&logo=tiktok&logoColor=white)](https://shop.tiktok.com)
+> **Showcase** — ~15% skeleton. Core implementation not included.
 
-**End-to-end TikTok US e-commerce content operations agent — main agent + 7 subagents + 13 skills, covering sourcing → script → storyboard → video → publish**
+Multi-agent system for TikTok e-commerce video production. One orchestrator coordinates 7 specialist subagents across the full production chain, from product selection to TikTok publish.
 
-> ⚠️ **Showcase Only** — ~15% skeleton. Production agents, skills, prompts & business logic not included.
+## Stack
 
-</div>
+- Python
+- Claude Code CLI (orchestrator and subagents)
+- Playwright (TikTok upload)
+- Seedance (AI video generation)
+- Feishu Bitable API
 
----
-
-## ✨ Overview
-
-The most ambitious project in this portfolio: a unified Claude Code multi-agent architecture that runs the entire TikTok US e-commerce content operation. Drama videos and dance / traffic videos share the **same agent pipeline** — only the routing differs. The system covers product sourcing, script ideation, storyboard generation, video assembly via Seedance, and final TikTok publishing.
-
----
-
-## 🏗️ Architecture
+## Agent Map
 
 ```
-                  ┌────────────────────────────────────┐
-                  │           Main Agent               │
-                  │     (orchestrator + routing)       │
-                  └──┬──────────┬──────────┬───────┬───┘
-                     │          │          │       │
-       ┌─────────────┘          │          │       └──────────────┐
-       ▼                        ▼          ▼                      ▼
-  ┌──────────┐         ┌──────────────┐ ┌──────────┐       ┌──────────────┐
-  │ ecom-    │         │ director     │ │ art-     │       │ storyboard-  │
-  │researcher│         │ (script)     │ │ designer │       │ artist       │
-  └────┬─────┘         └──────┬───────┘ └────┬─────┘       └──────┬───────┘
-       │                      │              │                    │
-  ┌────▼─────┐          ┌─────▼──────┐  ┌────▼─────┐         ┌────▼──────┐
-  │ image-   │          │ video-     │  │ live-    │         │ + 13      │
-  │ generator│          │ operator   │  │ operator │         │ skills    │
-  └──────────┘          └────────────┘  └──────────┘         └───────────┘
-                                                       (compliance, dreamina-cli,
-                                                        publish, nurture, ...)
+Orchestrator
+├── product-selector    # scrapes and ranks products
+├── script-writer       # generates hook + body + CTA
+├── storyboard-agent    # produces shot-by-shot breakdown
+├── seedance-prompter   # writes Seedance generation prompts
+├── asset-collector     # downloads product images/clips
+├── video-assembler     # stitches final video
+└── tiktok-publisher    # uploads via Playwright
 ```
 
----
+13 on-demand skills are available to any agent (e.g., web search, image resize, subtitle burn).
 
-## 🧠 Agents (8 total)
+## Usage
 
-| Agent | Role |
-|---|---|
-| Main | Orchestrator + routing (drama / ecom / dance) |
-| ecom-researcher | Sourcing + competitor analysis |
-| director | Script ideation + arc design |
-| art-designer | Character + scene design |
-| storyboard-artist | 12-grid storyboard + Seedance prompts |
-| image-generator | Reference image generation |
-| video-operator | Video assembly + TikTok publish |
-| live-operator | Live-stream operations |
+```bash
+pip install -r requirements.txt
+cp .env.example .env   # Claude API key, TikTok credentials, Feishu token
 
----
+# Run the full pipeline for one product
+python orchestrator.py --product-url "https://..."
 
-## 🛠️ Skills (13 total)
-
-`art-design` · `art-direction-review` · `compliance-review` · `director-skill` · `dreamina-cli` · `ecom-research` · `ecom-script-review` · `feishu-sync` · `image-generation` · `nurture` · `publish` · `script-analysis-review` · `seedance-storyboard` · `seedance-prompt-review` · `traffic-video` · `video-workflow`
-
----
-
-## 📁 Structure
-
-```
-ecom-video-multi-agent/
-├── .claude/
-│   ├── agents/
-│   │   ├── director.md
-│   │   └── ecom-researcher.md
-│   └── skills/
-│       ├── seedance-storyboard-skill/SKILL.md
-│       └── ecom-research-skill/SKILL.md
-├── src/
-│   └── orchestrator.py        # Routing & dispatch
-└── tools/
-    └── feishu_sync.py         # Bitable sync utility
+# Run a single subagent in isolation
+python agents/script_writer.py --product-json product.json
 ```
 
----
+## Structure
 
-## 🔧 Tech Stack
+```
+Ecom-Video-Multi-Agent/
+├── orchestrator.py
+├── agents/
+│   ├── product_selector.py
+│   ├── script_writer.py
+│   ├── storyboard_agent.py
+│   ├── seedance_prompter.py
+│   ├── asset_collector.py
+│   ├── video_assembler.py
+│   └── tiktok_publisher.py
+├── skills/            # 13 reusable skill modules
+├── prompts/           # prompt templates per agent
+└── .env.example
+```
 
-| Layer | Technology |
-|---|---|
-| Agent Platform | Claude Code (Anthropic) |
-| LLM | Claude Sonnet / Opus |
-| Multi-modal | Gemini 2.5 Pro (image gen) |
-| Video | Seedance 2.0 |
-| Storage | Feishu Bitable |
-| Publish | AdsPower + Playwright |
+## Configuration
 
----
-
-<div align="center">
-<sub>Showcase version · Production agents & skills not included · For portfolio reference only</sub>
-</div>
+| Variable | Description |
+|----------|-------------|
+| `ANTHROPIC_API_KEY` | Claude API key |
+| `SEEDANCE_API_KEY` | Seedance video generation key |
+| `FEISHU_APP_ID` | Feishu app credentials |
+| `TIKTOK_SESSION` | Playwright storage state for TikTok |
